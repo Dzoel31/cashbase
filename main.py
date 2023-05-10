@@ -1,13 +1,16 @@
 import mysql.connector
-import os, asyncio
+import os
 from prettytable import from_db_cursor
 
-async def connectToDatabase():
+# Prosedur untuk menjalankan xampp
+def connectToDatabase():
     os.system("C:\\xampp\\xampp_start.exe")
 
-async def closeConnection():
+# Prosedur untuk memberhentikan xampp
+def closeConnection():
     os.system("C:\\xampp\\xampp_stop.exe")
 
+# Prosedur untuk memilih database
 def lobby(myCursor):
     os.system("cls")
     print("===SELAMAT DATANG DI PROGRAM DATABASE===")
@@ -19,6 +22,7 @@ def lobby(myCursor):
     choose = input("Pilih database : ")
     myCursor.execute(f"USE {choose}")
 
+# Prosedur untuk berpindah database
 def selectDatabase(myCursor):
     os.system("cls")
     myCursor.execute("SHOW DATABASES")
@@ -29,9 +33,11 @@ def selectDatabase(myCursor):
     choose = input("Pilih database : ")
     myCursor.execute(f"USE {choose}")
 
+# Prosedur untuk menampilkan database yang sedang digunakan
 def useDatabase(myConnection):
     print("Database saat ini :", myConnection.database)
 
+# Prosedur untuk menampilkan tabel
 def showTable(myConnection, myCursor):
     os.system("cls")
     useDatabase(myConnection)
@@ -40,6 +46,7 @@ def showTable(myConnection, myCursor):
 
     print(listTable)
 
+# Prosedur untuk menjalankan perintah select
 def querySelect(myConnection, myCursor):
     repeat = "y"
     while repeat != "n":
@@ -63,6 +70,7 @@ def querySelect(myConnection, myCursor):
 
         repeat = input("\nIngin melanjutkan? [Y or Any key/N] : ").lower()
 
+# Prosedur untuk melakukan insert ke dalam database
 def queryInsert(myConnection, myCursor):
     repeat = "y"
     while repeat != "n":
@@ -76,8 +84,8 @@ def queryInsert(myConnection, myCursor):
         if choose == 1:
             table = input("Pilih table : ")
             myCursor.execute(f"DESC {table}")
-            field = [f[0] for f in myCursor]
-            value = []
+            field = [f[0] for f in myCursor] # Mengambil nama kolom dalam tabel
+            value = [] # Menampung value baru
 
             for i in range(len(field)):
                 value.append(input(f"Masukkan {field[i]} : "))
@@ -86,6 +94,7 @@ def queryInsert(myConnection, myCursor):
 
             myCursor.execute(sqlInsertQuery)
             
+            # Untuk mengecek apakah query berhasil dijalankan atau tidak
             if myCursor.rowcount > 0:
                 print(f"Query OK, {myCursor.rowcount} row inserted.")
             else:
@@ -97,6 +106,7 @@ def queryInsert(myConnection, myCursor):
 
         repeat = input("\nIngin melanjutkan? [Y or Any key/N] : ").lower()
 
+# Prosedur untuk melakukan proses update
 def queryUpdate(myConnection, myCursor):
     repeat = "y"
     while repeat != "n":
@@ -138,6 +148,7 @@ def queryUpdate(myConnection, myCursor):
         
         repeat = input("\nIngin melanjutkan? [Y or Any key/N] : ").lower()
 
+# Prosedur untuk menjalankan perintah delete
 def queryDelete(myConnection, myCursor):
     repeat = "y"
     while repeat != "n":
@@ -175,6 +186,7 @@ def queryDelete(myConnection, myCursor):
 
         repeat = input("\nIngin melanjutkan? [Y or Any key/N] : ").lower()           
 
+# Main menu program untuk memilih dan mengeksekusi query yang dipilih
 def mainMenu(myConnection, myCursor):
     try :
         while True:
@@ -210,11 +222,13 @@ def mainMenu(myConnection, myCursor):
         input("Enter untuk mengulang!")
         mainMenu(myConnection, myCursor)
 
-async def main():
-    await connectToDatabase()
+# Main program untuk menyambungkan dengan database, menjalankan menu, dan mengakhiri koneksi dengan database
+def main():
+    connectToDatabase()
     print("Connected to database succesfully!")
 
     try:
+        # Konfigurasi untuk koneksi
         myConnection = mysql.connector.connect(
             user="root",
             password="",
@@ -228,7 +242,7 @@ async def main():
     input("Press enter to continue")
     lobby(myCursor)
     mainMenu(myConnection, myCursor)
-    await closeConnection()
+    closeConnection()
     print("Disconnected succesfully!")
     
-asyncio.run(main())
+main() # Run Program

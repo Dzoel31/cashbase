@@ -1,6 +1,6 @@
 import mysql.connector
 import os
-from prettytable import from_db_cursor
+from prettytable import PrettyTable,from_db_cursor
 
 # Prosedur untuk menjalankan xampp
 def connectToDatabase():
@@ -35,11 +35,11 @@ def selectDatabase(myCursor):
 
 # Prosedur untuk menampilkan database yang sedang digunakan
 def useDatabase(myConnection):
+    os.system("cls")
     print("Database saat ini :", myConnection.database)
 
 # Prosedur untuk menampilkan tabel
 def showTable(myConnection, myCursor):
-    os.system("cls")
     useDatabase(myConnection)
     myCursor.execute("SHOW TABLES")
     listTable = from_db_cursor(myCursor)
@@ -186,6 +186,85 @@ def queryDelete(myConnection, myCursor):
 
         repeat = input("\nIngin melanjutkan? [Y or Any key/N] : ").lower()           
 
+# Prosedur untuk query join
+def queryJoin(myConnection, myCursor):
+    repeat = "y"
+    while repeat != "n":
+        currentQuery = "SELECT"
+        useDatabase(myConnection)
+        print("="*20)
+        print("[1] Join table")
+        print("[2] Exit")
+        print("="*20)
+        choose = int(input("Masukkan pilihan : "))
+
+        if choose == 1:
+            listChooseTable = []
+            while True:
+                showTable(myConnection, myCursor)
+                chooseTable = input("Pilih tabel : ")
+                listChooseTable.append(chooseTable)
+
+                myCursor.execute(f"DESC {chooseTable}")
+                field = [f[0] for f in myCursor]
+                
+                table = PrettyTable()
+                table.field_names = field
+                print(table)
+
+                chooseField = input("Pilih field : ")
+                aliasColumn = input("Alias : ")
+                currentQuery += f" {chooseTable}.{chooseField} AS {aliasColumn}"
+
+                continueSelectTable = input("Lanjut memilih tabel? [Y or Any Key/N] : ").lower()
+
+                if continueSelectTable == "n":
+                    break
+                else:
+                    currentQuery += ","
+            
+            fromTable = input("Dari tabel : ")
+            currentQuery += f" FROM {fromTable}"
+
+            rmDuplicateTable = [*set(listChooseTable)]
+
+            for i in range(len(rmDuplicateTable) - 1):
+                print("Pilih jenis join")
+                print("1. Inner Join")
+                print("1. Full Join")
+                print("1. Left Join")
+                print("1. Right Join")
+                chooseJoin = input("Masukkan jenis join : ").upper()
+                toTable = input("Ke tabel : ")
+
+                columnCondition = []
+
+                print("Gabung berdasarkan kondisi : ")
+                for j in range(2):
+                    print("Tabel :", rmDuplicateTable[j])
+                    myCursor.execute(f"DESC {rmDuplicateTable[j]}")
+                    field = [f[0] for f in myCursor]
+                    
+                    table = PrettyTable()
+                    table.field_names = field
+                    print(table)
+
+                    columnCondition.append(input("Pilih kondisi nilai kolom yang sama : "))
+
+                currentQuery += f" {chooseJoin} {toTable} ON {rmDuplicateTable[i]}.{columnCondition[0]} = {rmDuplicateTable[i + 1]}.{columnCondition[1]}"
+            
+            myCursor.execute(currentQuery)
+            tableResult = from_db_cursor(myCursor)
+            
+            print(tableResult)
+
+        elif choose == 2:
+            break
+        else:
+            input("Input tidak sesuai!\nEnter untuk mengulang!")
+
+        repeat = input("\nIngin melanjutkan? [Y or Any key/N] : ").lower()
+
 # Main menu program untuk memilih dan mengeksekusi query yang dipilih
 def mainMenu(myConnection, myCursor):
     try :
@@ -198,6 +277,7 @@ def mainMenu(myConnection, myCursor):
             print("[3] Query insert")
             print("[4] Query update")
             print("[5] Query delete")
+            print("[6] Query join")
             print("[0] Exit")
             print("="*20)
 
@@ -212,6 +292,8 @@ def mainMenu(myConnection, myCursor):
                 queryUpdate(myConnection, myCursor)
             elif choose == 5:
                 queryDelete(myConnection, myCursor)
+            elif choose == 6:
+                queryJoin(myConnection, myCursor)
             elif choose == 0:
                 break
             else:

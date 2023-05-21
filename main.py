@@ -1,14 +1,14 @@
 import mysql.connector
-import os
+import os, shutil
 from prettytable import PrettyTable,from_db_cursor
 
 # Prosedur untuk menjalankan xampp
 def connectToDatabase():
-    os.system("C:\\xampp\\xampp_start.exe")
+    os.system("xampp_start")
 
 # Prosedur untuk memberhentikan xampp
 def closeConnection():
-    os.system("C:\\xampp\\xampp_stop.exe")
+    os.system("xampp_stop")
 
 # Prosedur untuk memilih database
 def lobby(myCursor):
@@ -200,10 +200,14 @@ def queryJoin(myConnection, myCursor):
 
         if choose == 1:
             listChooseTable = []
+            rmDuplicateTable = []
             while True:
                 showTable(myConnection, myCursor)
+                print("="*20)
+                print("Memilih field yang ditampilkan")
                 chooseTable = input("Pilih tabel : ")
                 listChooseTable.append(chooseTable)
+                [rmDuplicateTable.append(x) for x in listChooseTable if x not in rmDuplicateTable]
 
                 myCursor.execute(f"DESC {chooseTable}")
                 field = [f[0] for f in myCursor]
@@ -214,27 +218,37 @@ def queryJoin(myConnection, myCursor):
 
                 chooseField = input("Pilih field : ")
                 aliasColumn = input("Alias : ")
-                currentQuery += f" {chooseTable}.{chooseField} AS {aliasColumn}"
+                currentQuery += f" {chooseTable}.{chooseField} AS '{aliasColumn}'"
 
-                continueSelectTable = input("Lanjut memilih tabel? [Y or Any Key/N] : ").lower()
+                continueSelectTable = input("Lanjut memilih field? [Y or Any Key/N] : ").lower()
 
                 if continueSelectTable == "n":
-                    break
+                    if len(rmDuplicateTable) < 2:
+                        print("Minimal memilih 2 tabel untuk operasi JOIN")
+                        input("Enter untuk lanjut")
+                        currentQuery += ","
+                    else:
+                        break
                 else:
                     currentQuery += ","
             
             fromTable = input("Dari tabel : ")
             currentQuery += f" FROM {fromTable}"
 
-            rmDuplicateTable = [*set(listChooseTable)]
+            join = {
+                1 : "INNER JOIN",
+                2 : "FULL JOIN",
+                3 : "LEFT JOIN",
+                4 : "RIGHT JOIN",
+            }
 
             for i in range(len(rmDuplicateTable) - 1):
                 print("Pilih jenis join")
                 print("1. Inner Join")
-                print("1. Full Join")
-                print("1. Left Join")
-                print("1. Right Join")
-                chooseJoin = input("Masukkan jenis join : ").upper()
+                print("2. Full Join")
+                print("3. Left Join")
+                print("4. Right Join")
+                chooseJoin = int(input("Masukkan jenis join (angka): "))
                 toTable = input("Ke tabel : ")
 
                 columnCondition = []
@@ -251,7 +265,7 @@ def queryJoin(myConnection, myCursor):
 
                     columnCondition.append(input("Pilih kondisi nilai kolom yang sama : "))
 
-                currentQuery += f" {chooseJoin} {toTable} ON {rmDuplicateTable[i]}.{columnCondition[0]} = {rmDuplicateTable[i + 1]}.{columnCondition[1]}"
+                currentQuery += f" {join[chooseJoin]} {toTable} ON {rmDuplicateTable[i]}.{columnCondition[0]} = {rmDuplicateTable[i + 1]}.{columnCondition[1]}"
             
             myCursor.execute(currentQuery)
             tableResult = from_db_cursor(myCursor)
@@ -326,5 +340,9 @@ def main():
     mainMenu(myConnection, myCursor)
     closeConnection()
     print("Disconnected succesfully!")
-    
-main() # Run Program
+
+progPathStart = shutil.which("xampp_start")
+if progPathStart == None:
+    print("Tidak ada program xampp_start.exe!")
+else:
+    main() # Run Program
